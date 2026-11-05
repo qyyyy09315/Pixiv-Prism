@@ -46,15 +46,18 @@
 
 ## 🚀 安装与使用
 
-### 前置要求
-* 浏览器安装有用户脚本管理器扩展：
-  * [Tampermonkey (篡改猴)](https://www.tampermonkey.net/)（推荐）
-  * [Violentmonkey (暴力猴)](https://violentmonkey.github.io/)
+### 方式 1：一键安装（Tampermonkey / Violentmonkey）
+只要你的浏览器已安装 [Tampermonkey (篡改猴)](https://www.tampermonkey.net/) 或 [Violentmonkey (暴力猴)](https://violentmonkey.github.io/)，点击下方任意直链即可触发自动安装：
 
-### 一键安装
-1. 点击打开本项目脚本源码文件：[`pixiv-prism.user.js`](./pixiv-prism.user.js)。
-2. 脚本管理器会自动弹出安装界面，点击 **“安装” / “Install”** 即可。
-3. 打开任意 [Pixiv 搜索页](https://www.pixiv.net/)（例如搜索任何角色名），即可看到搜索栏下方出现的 **Pixiv-Prism** 胶囊工具栏！
+* 🔗 **[点击一键安装 Pixiv-Prism (GitHub 直链)](https://raw.githubusercontent.com/qyyyy09315/Pixiv-Prism/main/pixiv-prism.user.js)**
+* ⚡ **[国内 CDN 加速安装直链 (jsDelivr)](https://fastly.jsdelivr.net/gh/qyyyy09315/Pixiv-Prism@main/pixiv-prism.user.js)**
+
+*(脚本内置 `@updateURL`，安装后后续 GitHub 版本更新将由 Tampermonkey 自动静默拉取升级)*
+
+### 方式 2：手动复制安装
+1. 打开 [`pixiv-prism.user.js`](https://github.com/qyyyy09315/Pixiv-Prism/blob/main/pixiv-prism.user.js) 查看源码并全选复制。
+2. 打开 Tampermonkey 管理面板 -> “添加新脚本” -> 粘贴覆盖并保存（Ctrl + S）。
+3. 访问任意 [Pixiv 搜索页](https://www.pixiv.net/)（如搜索任意角色）即可立即体验！
 
 ---
 
