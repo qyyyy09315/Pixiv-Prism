@@ -3,37 +3,38 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Pixiv-Prism-0096fa?style=for-the-badge&logo=pixiv&logoColor=white" alt="Pixiv-Prism" />
   <a href="https://greasyfork.org/zh-CN/scripts/603856-pixiv-prism"><img src="https://img.shields.io/badge/Greasy%20Fork-603856-red?style=for-the-badge&logo=greasyfork" alt="Greasy Fork" /></a>
-  <img src="https://img.shields.io/badge/Version-v1.0.0-blue?style=for-the-badge" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-v1.1.0-blue?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/badge/Platform-Tampermonkey%20%7C%20Violentmonkey-orange?style=for-the-badge" alt="Platform" />
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status" />
 </p>
 
 <p align="center">
-  <b>精美、轻量、高可用的 Pixiv 免会员热度排序与高赞筛选工具</b><br>
-  如棱镜折射光谱般，瞬间汇聚社区高光画作。
+  <b>精美、轻量、高可用的 Pixiv 免会员热度排序与全站图片极速加载工具</b><br>
+  如棱镜折射光谱般，瞬间汇聚社区高光画作，彻底告别碎图与加载缓慢。
 </p>
 
 ---
 
 ## 🌟 为什么选择 Pixiv-Prism？
 
-在浏览 Pixiv 时，普通用户无法使用官方按热度排序（Premium 会员特权）。目前社区现有方案普遍存在两极分化的缺陷：
-* **传统单图遍历脚本（如部分老旧油猴脚本）**：对页面所有作品无节制发起高频详情请求，短时间内触发 Cloudflare **429 Too Many Requests** 速率限制，导致作品批量显示“获取失败”或卡死。
-* **简单标签修改脚本**：仅机械拼接 `users入り`，搜出来的结果内部依然按“发布时间”倒序混乱排列，无法做到从高到低精细排序；且在单页应用（SPA）路由跳转后经常丢失组件。
+在浏览 Pixiv 时，普通用户无法使用官方按热度排序（Premium 会员特权），且国内直连环境下经常遇到图片加载极慢、连接重置或大图变成“碎图裂开”的问题。目前社区现有方案普遍存在缺陷：
+* **传统单图遍历脚本**：对所有作品高频发请求，触发 Cloudflare **429 Too Many Requests** 速率限制，导致大面积失效或卡死。
+* **图片加载脆断**：官方 CDN 域名 `i.pximg.net` 受到严重网络干扰，稍有波动大图直接渲染成破损图标，没有任何重试或容灾机制。
 
-**Pixiv-Prism 采用「双层渐进式排序架构（Hybrid Progressive Ranking）」**，完美化解上述矛盾：
+**Pixiv-Prism 专为极致体验打造，集成两大核心引擎**：
 
-1. **层级 1：无感粗筛（Zero Network Cost）**
-   * 采用现代原生 Charcoal 设计风格的胶囊标签栏（Pill Chips），支持一键切换 `500+`、`1000+`、`5000+`、`10000+`、`50000+` 收藏门槛。
-   * 自动清洗旧标签，瞬间锁定全站高赞高质量作品池，零额外请求，绝无 429 风险。
-2. **层级 2：单页就地重排引擎（In-Place Sorter）**
-   * 点击「⚡ 按热度重排当前页」，脚本自动抓取当前可视作品的真实收藏数。
-   * **智能客户端缓存**：基于 `sessionStorage` 记录收藏量，同张作品在标签页生命周期内零重复请求。
-   * **低并发与微抖动保护**：严格限制并发为 2，并引入随机微延迟，彻底告别被官方封禁或拦截。
-   * **高光角标与平滑重排**：在卡片右上角直观展示 `❤️ 12.5k`、`❤️ 5.8k` 彩色渐变角标，并按点赞数从大到小无损重新排列 DOM 网格。
-3. **现代 SPA 深度适配**：
-   * 监听 `history.pushState`、`history.replaceState` 与 `MutationObserver`，无论在站内如何点击作品并返回，工具栏始终毫秒级平滑常驻，无需 F5 刷新！
+### 💎 引擎 1：纯净双层渐进式排序架构
+1. **纯净搜索框（Clean Input Box）**：绝不污染搜索输入框，用户输入什么就是什么，无任何多余标签干扰。
+2. **现代胶囊粗筛（Zero Network Cost）**：采用 Pixiv 官方 Charcoal 风格圆角胶囊栏，一键切换 `500+`、`1000+`、`5000+`、`10000+`、`50000+` 收藏门槛，秒级直达全站高赞神作。
+3. **单页就地重排（In-Place Sorter）**：点击「⚡ 按热度重排当前页」，脚本并发安全抓取真实收藏数（并发 2 + 随机延迟，彻底杜绝 429），在卡片右上角直观展示 `❤️ 12.5k` 高光角标，并按点赞数从大到小无损排列 DOM 网格。
+4. **现代 SPA 深度适配**：无缝监听 `history.pushState`、`history.replaceState` 与 `MutationObserver`，站内跳转无需 F5 刷新！
+
+### 🚀 引擎 2：智能图片加速与碎图自动容灾系统 (Auto-Heal Engine)
+1. **全局碎图自愈 (Auto-Heal on Error)**：采用事件捕获机制监控页面所有图片。一旦任何插画、缩略图或头像因网络抖动加载失败，脚本瞬间无感将其切换为全球高速 CDN 镜像（`i.pixiv.re`），碎图秒级复活！
+2. **大图详情页专属悬浮工具条**：进入 `/artworks/:id` 详情页，右下角自动唤起「💎 棱镜加速」面板：
+   * **⚡ 高速加载**：一键将当前页面的所有画作切为高速 CDN 镜像，告别转圈与断流。
+   * **🔍 无损原图**：一键在新标签页免代理满速查看当前插画的原画无损大图！
 
 ---
 

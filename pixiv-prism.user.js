@@ -6,8 +6,8 @@
 // @supportURL   https://github.com/qyyyy09315/Pixiv-Prism/issues
 // @updateURL    https://raw.githubusercontent.com/qyyyy09315/Pixiv-Prism/main/pixiv-prism.user.js
 // @downloadURL  https://raw.githubusercontent.com/qyyyy09315/Pixiv-Prism/main/pixiv-prism.user.js
-// @version      1.0.0
-// @description  免会员按人气排序与高赞筛选：纯净搜索框（不污染关键词）、现代胶囊标签过滤、无感 SPA 路由常驻、防 429 智能缓存与单页精细热度重排。仅供技术学习与学术交流使用。
+// @version      1.1.0
+// @description  免会员按人气排序、纯净搜索框、图片加载加速与碎图自动复活修复、查看无损原图。仅供技术学习与学术交流使用。
 // @author       qyyyy09315
 // @match        https://www.pixiv.net/*
 // @grant        GM_addStyle
@@ -147,6 +147,63 @@
     }
     .prism-badge.high-tier {
       background: linear-gradient(135deg, rgba(0, 150, 250, 0.9), rgba(0, 200, 255, 0.9));
+    }
+    /* 大图详情页悬浮加速面板 */
+    .prism-artwork-bar {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--charcoal-surface1, rgba(255, 255, 255, 0.96));
+      border: 1px solid var(--charcoal-border, rgba(0, 0, 0, 0.12));
+      border-radius: 24px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      z-index: 9999;
+      font-size: 12px;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+    }
+    @media (prefers-color-scheme: dark) {
+      .prism-artwork-bar {
+        background: var(--charcoal-surface1, rgba(31, 35, 40, 0.95));
+        border-color: #30363d;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      }
+    }
+    .prism-artwork-bar:hover {
+      box-shadow: 0 6px 20px rgba(0, 150, 250, 0.3);
+      transform: translateY(-2px);
+    }
+    .prism-mini-btn {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 14px;
+      background: var(--charcoal-surface2, rgba(0, 0, 0, 0.05));
+      color: var(--charcoal-text1, #333);
+      font-weight: 600;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      .prism-mini-btn {
+        color: #eee;
+        background: rgba(255, 255, 255, 0.08);
+      }
+    }
+    .prism-mini-btn:hover {
+      background: #0096fa;
+      color: #fff;
+    }
+    .prism-mini-btn.active {
+      background: #0096fa;
+      color: #fff;
     }
   `;
 
@@ -453,24 +510,127 @@
     }
   }
 
-  // ===================== 6. SPA 路由与 DOM 变化监听 =====================
+  // ===================== 6. 智能图片加速与碎图自动容灾系统 (Auto-Heal Engine) =====================
+  // 高速公共 CDN 镜像源
+  const FAST_IMG_MIRROR = 'https://i.pixiv.re';
+
+  /**
+   * 全局碎图捕获与自愈 (Global Image Auto-Heal)
+   * 采用全局事件捕获，一旦页面任何 <img> 加载失败（网络超时/SNI阻断/丢包），
+   * 立即无感将其替换为全球高速 CDN 镜像 i.pixiv.re，彻底告别碎图！
+   */
+  function initImageAutoHeal() {
+    window.addEventListener(
+      'error',
+      function (e) {
+        if (e.target && e.target.tagName === 'IMG') {
+          const img = e.target;
+          const src = img.currentSrc || img.src;
+
+          if (src && src.includes('pximg.net') && !img.dataset.prismHealed) {
+            img.dataset.prismHealed = 'true';
+            img.referrerPolicy = 'no-referrer';
+            const healedSrc = src.replace(/https?:\/\/[^\/]*\.pximg\.net/, FAST_IMG_MIRROR);
+            console.log('[Pixiv-Prism] 🚀 捕获到碎图，自动启动 CDN 镜像容灾自愈:', healedSrc);
+            img.src = healedSrc;
+          }
+        }
+      },
+      true // 必须在捕获阶段捕获 error 事件
+    );
+  }
+
+  /**
+   * 大图详情页专属加速面板 (Artwork Detail Accelerator)
+   * 在 /artworks/:id 详情页中，提供一键切换高速 CDN 与一键在新标签页打开无损原图
+   */
+  function renderArtworkAccelerator() {
+    const isArtworkPage = window.location.pathname.startsWith('/artworks/');
+    const existing = document.getElementById('prism-artwork-bar');
+
+    if (!isArtworkPage) {
+      if (existing) existing.remove();
+      return;
+    }
+    if (existing) return;
+
+    const bar = document.createElement('div');
+    bar.id = 'prism-artwork-bar';
+    bar.className = 'prism-artwork-bar';
+    bar.innerHTML = `
+      <span style="font-weight:700;color:#0096fa;display:inline-flex;align-items:center;gap:4px;">💎 棱镜加速</span>
+      <button id="prism-switch-fast-cdn" class="prism-mini-btn" title="将当前页面的大图无缝切换为高速 CDN 镜像，告别加载缓慢与断开">⚡ 高速加载</button>
+      <button id="prism-open-original" class="prism-mini-btn" title="在新标签页免代理满速查看当前插画的原画无损大图">🔍 无损原图</button>
+    `;
+
+    document.body.appendChild(bar);
+
+    // 绑定“高速加载”事件
+    document.getElementById('prism-switch-fast-cdn')?.addEventListener('click', () => {
+      const imgs = Array.from(document.querySelectorAll('img')).filter(
+        (i) => i.src && (i.src.includes('pximg.net') || i.src.includes('pixiv.re'))
+      );
+      let count = 0;
+      imgs.forEach((img) => {
+        if (!img.src.includes('i.pixiv.re')) {
+          img.dataset.prismHealed = 'true';
+          img.referrerPolicy = 'no-referrer';
+          img.src = img.src.replace(/https?:\/\/[^\/]*\.pximg\.net/, FAST_IMG_MIRROR);
+          count++;
+        }
+      });
+      const btn = document.getElementById('prism-switch-fast-cdn');
+      if (btn) {
+        btn.classList.add('active');
+        btn.textContent = `⚡ CDN加速中 (${count || imgs.length})`;
+      }
+    });
+
+    // 绑定“无损原图”事件
+    document.getElementById('prism-open-original')?.addEventListener('click', async () => {
+      const match = window.location.pathname.match(/\/artworks\/(\d+)/);
+      if (!match) return;
+      const illustId = match[1];
+
+      try {
+        const res = await fetch(`/ajax/illust/${illustId}?time=${Date.now()}`, { credentials: 'include' });
+        const json = await res.json();
+        const originalUrl = json?.body?.urls?.original;
+        if (originalUrl) {
+          const fastOriginalUrl = originalUrl.replace(/https?:\/\/[^\/]*\.pximg\.net/, FAST_IMG_MIRROR);
+          window.open(fastOriginalUrl, '_blank');
+        } else {
+          alert('[Pixiv-Prism] 未能提取到该插画的无损原图直链！');
+        }
+      } catch (e) {
+        console.error('[Pixiv-Prism] 获取无损原图失败:', e);
+      }
+    });
+  }
+
+  // ===================== 7. SPA 路由与 DOM 变化监听 =====================
+  function handlePageChange() {
+    renderPrismBar();
+    renderArtworkAccelerator();
+  }
+
   const originalPushState = history.pushState;
   const originalReplaceState = history.replaceState;
 
   history.pushState = function (...args) {
     const result = originalPushState.apply(this, args);
-    setTimeout(renderPrismBar, 300);
+    setTimeout(handlePageChange, 300);
     return result;
   };
 
   history.replaceState = function (...args) {
     const result = originalReplaceState.apply(this, args);
-    setTimeout(renderPrismBar, 300);
+    setTimeout(handlePageChange, 300);
     return result;
   };
 
   window.addEventListener('popstate', () => {
-    setTimeout(renderPrismBar, 300);
+    setTimeout(handlePageChange, 300);
   });
 
   let observerTimer = null;
@@ -478,15 +638,19 @@
     if (observerTimer) return;
     observerTimer = setTimeout(() => {
       observerTimer = null;
-      renderPrismBar();
+      handlePageChange();
     }, 400);
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
 
+  // 启动全局碎图自动自愈系统
+  initImageAutoHeal();
+
+  // 初始挂载
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', renderPrismBar);
+    document.addEventListener('DOMContentLoaded', handlePageChange);
   } else {
-    renderPrismBar();
+    handlePageChange();
   }
 })();
