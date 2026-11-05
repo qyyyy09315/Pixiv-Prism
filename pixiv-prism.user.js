@@ -6,8 +6,8 @@
 // @supportURL   https://github.com/qyyyy09315/Pixiv-Prism/issues
 // @updateURL    https://raw.githubusercontent.com/qyyyy09315/Pixiv-Prism/main/pixiv-prism.user.js
 // @downloadURL  https://raw.githubusercontent.com/qyyyy09315/Pixiv-Prism/main/pixiv-prism.user.js
-// @version      1.2.0
-// @description  全站默认图片极速加载、底层防掉图自愈、免会员按人气排序、纯净搜索框、一键免代理查看无损原图。仅供技术学习与学术交流使用。
+// @version      1.2.1
+// @description  全站默认图片极速加载、底层防掉图自愈、修复卡片重排DOM撕裂、免会员按人气排序、纯净搜索框、一键免代理查看无损原图。仅供技术学习与学术交流使用。
 // @author       qyyyy09315
 // @match        https://www.pixiv.net/*
 // @grant        GM_addStyle
@@ -82,7 +82,7 @@
   setupRootImageInterceptor();
 
   console.log(
-    '%c[Pixiv-Prism v1.2.0]%c 全站默认图片极速加载 | 底层防掉图 | 纯净搜索框 | 尊重原创版权',
+    '%c[Pixiv-Prism v1.2.1]%c 全站默认图片极速加载 | 底层防掉图 | 网格卡片无损重排 | 纯净搜索框 | 尊重原创版权',
     'background: #0096fa; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold;',
     'color: #0096fa; margin-left: 6px;'
   );
@@ -426,14 +426,16 @@
       if (match) {
         const id = match[1];
         if (seenIds.has(id)) continue;
-        seenIds.add(id);
 
+        // 精准锁定 Pixiv 现代网格卡片根单元（col-span-2 或 li，确保图片和标题完整包含，绝不撕裂）
         const cardElement =
+          link.closest('div.col-span-2') ||
+          link.closest('div[class*="col-span"]') ||
           link.closest('li') ||
-          link.closest('div[type="illust"]') ||
-          link.parentElement?.parentElement;
+          link.closest('[type="illust"]');
 
-        if (cardElement) {
+        if (cardElement && cardElement.parentElement) {
+          seenIds.add(id);
           cards.push({ id, element: cardElement, linkElement: link });
         }
       }

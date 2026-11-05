@@ -3,7 +3,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Pixiv-Prism-0096fa?style=for-the-badge&logo=pixiv&logoColor=white" alt="Pixiv-Prism" />
   <a href="https://greasyfork.org/zh-CN/scripts/603856-pixiv-prism"><img src="https://img.shields.io/badge/Greasy%20Fork-603856-red?style=for-the-badge&logo=greasyfork" alt="Greasy Fork" /></a>
-  <img src="https://img.shields.io/badge/Version-v1.2.0-blue?style=for-the-badge" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-v1.2.1-blue?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/badge/Platform-Tampermonkey%20%7C%20Violentmonkey-orange?style=for-the-badge" alt="Platform" />
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status" />
