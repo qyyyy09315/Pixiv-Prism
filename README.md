@@ -2,6 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Pixiv-Prism-0096fa?style=for-the-badge&logo=pixiv&logoColor=white" alt="Pixiv-Prism" />
+  <a href="https://greasyfork.org/zh-CN/scripts/603856-pixiv-prism"><img src="https://img.shields.io/badge/Greasy%20Fork-603856-red?style=for-the-badge&logo=greasyfork" alt="Greasy Fork" /></a>
   <img src="https://img.shields.io/badge/Version-v1.0.0-blue?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/badge/Platform-Tampermonkey%20%7C%20Violentmonkey-orange?style=for-the-badge" alt="Platform" />
@@ -47,7 +48,10 @@
 
 ## 🚀 安装与使用
 
-### 方式 1：一键安装（Tampermonkey / Violentmonkey）
+### 方式 1：通过 Greasy Fork 安装（最推荐，官方首选商店）
+👉 **[点击前往 Greasy Fork 安装 Pixiv-Prism](https://greasyfork.org/zh-CN/scripts/603856-pixiv-prism)**
+
+### 方式 2：GitHub / CDN 一键直装（Tampermonkey / Violentmonkey）
 只要你的浏览器已安装 [Tampermonkey (篡改猴)](https://www.tampermonkey.net/) 或 [Violentmonkey (暴力猴)](https://violentmonkey.github.io/)，点击下方任意直链即可触发自动安装：
 
 * 🔗 **[点击一键安装 Pixiv-Prism (GitHub 直链)](https://raw.githubusercontent.com/qyyyy09315/Pixiv-Prism/main/pixiv-prism.user.js)**

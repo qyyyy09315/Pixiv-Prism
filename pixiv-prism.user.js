@@ -2,7 +2,7 @@
 // @name         Pixiv-Prism
 // @name:zh-CN   Pixiv-Prism (棱镜 - 免会员热度排序与高赞筛选)
 // @namespace    https://github.com/qyyyy09315/Pixiv-Prism
-// @homepageURL  https://github.com/qyyyy09315/Pixiv-Prism
+// @homepageURL  https://greasyfork.org/zh-CN/scripts/603856-pixiv-prism
 // @supportURL   https://github.com/qyyyy09315/Pixiv-Prism/issues
 // @updateURL    https://raw.githubusercontent.com/qyyyy09315/Pixiv-Prism/main/pixiv-prism.user.js
 // @downloadURL  https://raw.githubusercontent.com/qyyyy09315/Pixiv-Prism/main/pixiv-prism.user.js
