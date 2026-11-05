@@ -6,8 +6,8 @@
 // @supportURL   https://github.com/qyyyy09315/Pixiv-Prism/issues
 // @updateURL    https://raw.githubusercontent.com/qyyyy09315/Pixiv-Prism/main/pixiv-prism.user.js
 // @downloadURL  https://raw.githubusercontent.com/qyyyy09315/Pixiv-Prism/main/pixiv-prism.user.js
-// @version      1.1.0
-// @description  免会员按人气排序、纯净搜索框、图片加载加速与碎图自动复活修复、查看无损原图。仅供技术学习与学术交流使用。
+// @version      1.2.0
+// @description  全站默认图片极速加载、底层防掉图自愈、免会员按人气排序、纯净搜索框、一键免代理查看无损原图。仅供技术学习与学术交流使用。
 // @author       qyyyy09315
 // @match        https://www.pixiv.net/*
 // @grant        GM_addStyle
@@ -26,8 +26,63 @@
 (function () {
   'use strict';
 
+  // 全球高速公共 CDN 镜像源
+  const FAST_IMG_MIRROR = 'https://i.pixiv.re';
+
+  // ===================== [核心黑科技] 底层原型级图片请求拦截与全站默认加速 =====================
+  // 在任何脚本与框架给图片赋值前，于网络栈底层瞬间将 pximg.net 重写为全球高速 CDN，彻底杜绝掉图
+  function setupRootImageInterceptor() {
+    try {
+      const originalSrcDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+      if (originalSrcDesc && originalSrcDesc.set) {
+        Object.defineProperty(HTMLImageElement.prototype, 'src', {
+          set: function (val) {
+            if (typeof val === 'string' && val.includes('pximg.net')) {
+              val = val.replace(/https?:\/\/[^\/]*\.pximg\.net/, FAST_IMG_MIRROR);
+              this.referrerPolicy = 'no-referrer';
+            }
+            return originalSrcDesc.set.call(this, val);
+          },
+          get: function () {
+            return originalSrcDesc.get.call(this);
+          },
+          configurable: true,
+        });
+      }
+
+      const originalSetAttribute = Element.prototype.setAttribute;
+      Element.prototype.setAttribute = function (name, val) {
+        if (name === 'src' && typeof val === 'string' && val.includes('pximg.net')) {
+          val = val.replace(/https?:\/\/[^\/]*\.pximg\.net/, FAST_IMG_MIRROR);
+          if (this.tagName === 'IMG') {
+            this.referrerPolicy = 'no-referrer';
+          }
+        }
+        return originalSetAttribute.call(this, name, val);
+      };
+
+      // 拦截大图链接点击（防止新标签页打开触发 403 防盗链）
+      document.addEventListener(
+        'click',
+        function (e) {
+          const targetA = e.target.closest('a');
+          if (targetA && targetA.href && targetA.href.includes('pximg.net')) {
+            targetA.referrerPolicy = 'no-referrer';
+            targetA.href = targetA.href.replace(/https?:\/\/[^\/]*\.pximg\.net/, FAST_IMG_MIRROR);
+          }
+        },
+        true
+      );
+    } catch (err) {
+      console.warn('[Pixiv-Prism] 原型拦截器初始化降级:', err);
+    }
+  }
+
+  // 立即在第一时间激活底层拦截器
+  setupRootImageInterceptor();
+
   console.log(
-    '%c[Pixiv-Prism v1.0.0]%c 棱镜已就绪 | 纯净搜索框 | 尊重原创版权',
+    '%c[Pixiv-Prism v1.2.0]%c 全站默认图片极速加载 | 底层防掉图 | 纯净搜索框 | 尊重原创版权',
     'background: #0096fa; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold;',
     'color: #0096fa; margin-left: 6px;'
   );
@@ -511,8 +566,27 @@
   }
 
   // ===================== 6. 智能图片加速与碎图自动容灾系统 (Auto-Heal Engine) =====================
-  // 高速公共 CDN 镜像源
-  const FAST_IMG_MIRROR = 'https://i.pixiv.re';
+  /**
+   * 全站主动图片扫描与自愈防截断 (Active Image Healer)
+   * 自动遍历并修正页面上所有残存的 pximg.net 图片，处理网络中断导致的残损图
+   */
+  function scanAndHealImages() {
+    const imgs = document.querySelectorAll('img');
+    imgs.forEach((img) => {
+      const src = img.getAttribute('src') || img.src;
+      if (src && src.includes('pximg.net')) {
+        img.dataset.prismHealed = 'true';
+        img.referrerPolicy = 'no-referrer';
+        img.src = src.replace(/https?:\/\/[^\/]*\.pximg\.net/, FAST_IMG_MIRROR);
+      }
+      // 防掉图截断二次检测：如果图片显示已完成但高度为0，加上重试参数重新拉取完整数据
+      if (img.complete && img.naturalHeight === 0 && img.src && !img.dataset.prismRetried) {
+        img.dataset.prismRetried = 'true';
+        const separator = img.src.includes('?') ? '&' : '?';
+        img.src = img.src + separator + 'prism_retry=' + Date.now();
+      }
+    });
+  }
 
   /**
    * 全局碎图捕获与自愈 (Global Image Auto-Heal)
@@ -538,11 +612,14 @@
       },
       true // 必须在捕获阶段捕获 error 事件
     );
+
+    // 页面加载完成后主动扫描一次
+    setTimeout(scanAndHealImages, 500);
   }
 
   /**
    * 大图详情页专属加速面板 (Artwork Detail Accelerator)
-   * 在 /artworks/:id 详情页中，提供一键切换高速 CDN 与一键在新标签页打开无损原图
+   * 在 /artworks/:id 详情页中，默认处于全速加速状态，并提供一键免代理打开无损原图
    */
   function renderArtworkAccelerator() {
     const isArtworkPage = window.location.pathname.startsWith('/artworks/');
@@ -552,6 +629,10 @@
       if (existing) existing.remove();
       return;
     }
+
+    // 详情页默认自动执行全量加速替换
+    scanAndHealImages();
+
     if (existing) return;
 
     const bar = document.createElement('div');
@@ -559,32 +640,11 @@
     bar.className = 'prism-artwork-bar';
     bar.innerHTML = `
       <span style="font-weight:700;color:#0096fa;display:inline-flex;align-items:center;gap:4px;">💎 棱镜加速</span>
-      <button id="prism-switch-fast-cdn" class="prism-mini-btn" title="将当前页面的大图无缝切换为高速 CDN 镜像，告别加载缓慢与断开">⚡ 高速加载</button>
-      <button id="prism-open-original" class="prism-mini-btn" title="在新标签页免代理满速查看当前插画的原画无损大图">🔍 无损原图</button>
+      <span class="prism-mini-btn active" title="全站默认已自动开启高速 CDN 镜像加速，告别转圈与断流">⚡ 全速加速中</span>
+      <button id="prism-open-original" class="prism-mini-btn" title="在新标签页免代理满速查看当前插画的原画无损大图">🔍 查看无损原图</button>
     `;
 
     document.body.appendChild(bar);
-
-    // 绑定“高速加载”事件
-    document.getElementById('prism-switch-fast-cdn')?.addEventListener('click', () => {
-      const imgs = Array.from(document.querySelectorAll('img')).filter(
-        (i) => i.src && (i.src.includes('pximg.net') || i.src.includes('pixiv.re'))
-      );
-      let count = 0;
-      imgs.forEach((img) => {
-        if (!img.src.includes('i.pixiv.re')) {
-          img.dataset.prismHealed = 'true';
-          img.referrerPolicy = 'no-referrer';
-          img.src = img.src.replace(/https?:\/\/[^\/]*\.pximg\.net/, FAST_IMG_MIRROR);
-          count++;
-        }
-      });
-      const btn = document.getElementById('prism-switch-fast-cdn');
-      if (btn) {
-        btn.classList.add('active');
-        btn.textContent = `⚡ CDN加速中 (${count || imgs.length})`;
-      }
-    });
 
     // 绑定“无损原图”事件
     document.getElementById('prism-open-original')?.addEventListener('click', async () => {
