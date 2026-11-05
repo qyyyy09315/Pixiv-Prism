@@ -6,7 +6,7 @@
 // @supportURL   https://github.com/qyyyy09315/Pixiv-Prism/issues
 // @updateURL    https://raw.githubusercontent.com/qyyyy09315/Pixiv-Prism/main/pixiv-prism.user.js
 // @downloadURL  https://raw.githubusercontent.com/qyyyy09315/Pixiv-Prism/main/pixiv-prism.user.js
-// @version      1.1.0
+// @version      1.0.0
 // @description  免会员按人气排序与高赞筛选：纯净搜索框（不污染关键词）、现代胶囊标签过滤、无感 SPA 路由常驻、防 429 智能缓存与单页精细热度重排。仅供技术学习与学术交流使用。
 // @author       qyyyy09315
 // @match        https://www.pixiv.net/*
@@ -27,7 +27,7 @@
   'use strict';
 
   console.log(
-    '%c[Pixiv-Prism v1.1.0]%c 棱镜已就绪 | 纯净搜索框 | 尊重原创版权',
+    '%c[Pixiv-Prism v1.0.0]%c 棱镜已就绪 | 纯净搜索框 | 尊重原创版权',
     'background: #0096fa; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold;',
     'color: #0096fa; margin-left: 6px;'
   );
